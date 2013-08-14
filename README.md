@@ -7,8 +7,14 @@ No license, no copyright, no warranty, no support. Use, re-use, distribute as yo
 
 - autoscale-console.py
 
-To install, just download the script, make it executable (chmod) or run it with the "python" command on the command line.
+Install
+=======
 
+Download the script. Edit the config section. Make the script executable (chmod) or run it with the "python" command on the command line.
+
+
+Notes
+=====
 
 Do I really need to say that this is still a work in progress and that if you use it you should do so at your own risk?
 
