@@ -1,0 +1,6 @@
+#!/usr/bin/python
+
+# Commands for initializing every EC2 instance that is launched
+# with this user-data file by the AutoScaling Group using it.
+
+print('Hello World')

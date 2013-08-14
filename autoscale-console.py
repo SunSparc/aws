@@ -60,6 +60,8 @@ CURRENT_REGION = 'us-east-1'
 ########## END SCRIPT CONFIGURATIONS #########
 ##############################################
 
+DATE_FORMAT = '%Y.%m.%d-%H:%M:%S'
+
 INSTANCE_TYPE_LIST = [
     't1.micro',
     'm1.small',
@@ -359,7 +361,6 @@ def create_group():
         connection=asConnection
         )
     asConnection.create_auto_scaling_group(asgroup) # returns request id
-    # asgroup.get_activities() OR asConnection.get_all_activities(asgroup)
 # end def create_group
 
 
@@ -429,6 +430,24 @@ def delete_group(groups=[]):
 
 ## TODO: Add methods for managing instances of groups: list instances, delete instances
 
+def show_activities(groups):
+    # Get list of groups
+    #groups = read_groups(get=True, details=True)
+    # Choose which group to update
+    print('\nWhich Group would you like to see activity for?')
+    group_number = get_choice(range(1, len(groups)+1))
+    activities = asConnection.get_all_activities(groups[group_number].name, max_records=10)
+    for activity in activities:
+        print("\n")
+        print('Start time: %s' % activity.start_time.strftime(DATE_FORMAT))
+        print('End time: %s' % activity.end_time.strftime(DATE_FORMAT))
+        print('Description: %s' % activity.description)
+        print('Cause: %s' % activity.cause)
+        print('Progress: %s%%' % activity.progress)
+        print('Status code: %s' % activity.status_code)
+        print('Status message: %s' % activity.status_message)
+    # TODO: Add option to follow (like tail -f) and have status continually update.
+
 def manage_groups():
     clear()
     print('\n')
@@ -444,8 +463,9 @@ def manage_groups():
     print('1) Create new Group')
     print('2) Update existing Group')
     print('3) Delete an Group')
+    print('4) Show Group Activities')
     # Get group activities: group.get_activities(), for activity in group[0].get_activities():
-    choice = get_choice([0, 1, 2, 3])
+    choice = get_choice([0, 1, 2, 3, 4])
 
     if choice == 0:
         return True
@@ -457,6 +477,8 @@ def manage_groups():
         pass
     elif choice == 3:
         delete_group(groups)
+    elif choice == 4:
+        show_activities(groups)
 
     print('\r')
     raw_input('(Press Enter to continue)')
