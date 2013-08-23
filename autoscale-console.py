@@ -434,19 +434,60 @@ def show_activities(groups):
     # Get list of groups
     #groups = read_groups(get=True, details=True)
     # Choose which group to update
-    print('\nWhich Group would you like to see activity for?')
-    group_number = get_choice(range(1, len(groups)+1))
+#    print('\nWhich Group would you like to see activity for?')
+#    group_number = get_choice(range(1, len(groups)+1))
+    group_number = select_group(groups)
     activities = asConnection.get_all_activities(groups[group_number].name, max_records=10)
-    for activity in activities:
+    for activity in reversed(activities):
         print("\n")
-        print('Start time: %s' % activity.start_time.strftime(DATE_FORMAT))
-        print('End time: %s' % activity.end_time.strftime(DATE_FORMAT))
+        print('START TIME: %s' % activity.start_time.strftime(DATE_FORMAT))
+        if activity.end_time == None:
+            print('End time: <none>')
+        else:
+            print('End time: %s' % activity.end_time.strftime(DATE_FORMAT))
         print('Description: %s' % activity.description)
         print('Cause: %s' % activity.cause)
         print('Progress: %s%%' % activity.progress)
         print('Status code: %s' % activity.status_code)
         print('Status message: %s' % activity.status_message)
     # TODO: Add option to follow (like tail -f) and have status continually update.
+    # Follow mode:
+    #   
+
+def terminate_instances(groups):
+    #print('\nWhich Group would you like to terminate instances in?')
+    #group_number = get_choice(range(1, len(groups)+1))
+    group_number = select_group(groups)
+    count = 1
+    instances = {}
+    for instance in groups[group_number].instances:
+        print("\n%s) Instance ID: %s" % (count, instance.instance_id))
+        print("  - launch_config_name: (%s)" % instance.launch_config_name)
+        print("  - availability_zone: (%s)" % instance.availability_zone)
+        print("  - lifecycle_state: (%s)" % instance.lifecycle_state)
+        print("  - health_status: (%s)" % instance.health_status)
+        instances[count] = instance
+        count += 1
+    instance_number = get_choice(range(0, len(groups[group_number].instances)+1))
+    if instance_number == 0:
+        # Kill all instances by setting group capacity to min_size
+        print("Group capacity set to %s. Terminating excess instances." % groups[group_number].min_size)
+        asConnection.set_desired_capacity(groups[group_number].name, groups[group_number].min_size)
+    else:
+        print("Terminating instance: %s" % instances[instance_number].instance_id)
+        asConnection.terminate_instance(instances[instance_number].instance_id, decrement_capacity=True)
+
+
+def select_group(groups):
+    group_count = len(groups)
+    if group_count == 0:
+        print("There are no groups.")
+        return False
+    elif group_count == 1:
+        return 1
+    else:
+        print('\nSelect a Group.')
+        return get_choice(range(1, len(groups)+1))
 
 def manage_groups():
     clear()
@@ -454,18 +495,19 @@ def manage_groups():
     print('-----------------------------')
     print('  Manage AutoScaling Groups')
     print('-----------------------------')
-    print('\r')
+    print('\n')
     print('AutoScaling Group Lists:')
     groups = read_groups(True)
-    print('\r')
+    print('\n')
     print('Actions:')
     print('0) Return to Main')
     print('1) Create new Group')
     print('2) Update existing Group')
     print('3) Delete an Group')
-    print('4) Show Group Activities')
+    print('4) Show Group Activities (10 most recent)')
+    print('5) Terminate instances')
     # Get group activities: group.get_activities(), for activity in group[0].get_activities():
-    choice = get_choice([0, 1, 2, 3, 4])
+    choice = get_choice([0, 1, 2, 3, 4, 5])
 
     if choice == 0:
         return True
@@ -479,6 +521,8 @@ def manage_groups():
         delete_group(groups)
     elif choice == 4:
         show_activities(groups)
+    elif choice == 5:
+        terminate_instances(groups)
 
     print('\r')
     raw_input('(Press Enter to continue)')
@@ -733,6 +777,7 @@ def clear():
     os.system( [ 'clear', 'cls' ][ os.name == 'nt' ] )
 
 def make_connections():
+    print("Connecting to AWS...")
     connect_to_autoscale()
     connect_to_cloudwatch()
     connect_to_ec2()
@@ -779,7 +824,7 @@ def main():
     print('1) Change current region')
     print('2) Get AutoScaling status')
     print('3) Manage Launch Configurations')
-    print('4) Manage AutoScaling Groups') ##### WORKING HERE #####
+    print('4) Manage AutoScaling Groups')
     print('5) Manage Policies')
     print('6) Manage Alarms')
     # TODO: Add an option to quickly setup everything (LC, ASG, P, A) just using the defaults.
