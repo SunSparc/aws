@@ -468,6 +468,7 @@ def terminate_instances(groups):
         print("  - health_status: (%s)" % instance.health_status)
         instances[count] = instance
         count += 1
+    print('\nWhich instance do you want to terminate? (0 = terminate all)')
     instance_number = get_choice(range(0, len(groups[group_number].instances)+1))
     if instance_number == 0:
         # Kill all instances by setting group capacity to min_size
