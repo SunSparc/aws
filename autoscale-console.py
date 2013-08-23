@@ -96,7 +96,7 @@ def connect_to_ec2():
     global ec2Connection
     ec2Connection = boto.ec2.connect_to_region(CURRENT_REGION)
     # Get availability zones
-    REGIONS[CURRENT_REGION]['zones']
+    REGIONS[CURRENT_REGION]['zones'] = []
     for zone in ec2Connection.get_all_zones():
         REGIONS[CURRENT_REGION]['zones'].append(zone.name)
     # Get security groups
@@ -309,7 +309,7 @@ def manage_launch_configs():
         delete_launch_config(launchconfigs[lc_number].name)
 
     print('\r')
-    raw_input('(Press Enter to continue)')
+    raw_input('(Press Enter to continue.)')
     manage_launch_configs()
 
 #############################################
@@ -428,7 +428,7 @@ def delete_group(groups=[]):
     else:
         print('Group will not be deleted')
 
-## TODO: Add methods for managing instances of groups: list instances, delete instances
+## TODO: Add methods for managing instances of groups: list instances
 
 def show_activities(groups):
     # Get list of groups
@@ -516,7 +516,7 @@ def manage_groups():
     elif choice == 2:
         #group_number = int(raw_input('Enter Group # to update: '))
         #update_group(groups[group_number].name)
-        pass
+        print('(No yet implemented.)')
     elif choice == 3:
         delete_group(groups)
     elif choice == 4:
@@ -525,7 +525,7 @@ def manage_groups():
         terminate_instances(groups)
 
     print('\r')
-    raw_input('(Press Enter to continue)')
+    raw_input('(Press Enter to continue.)')
     manage_groups()
 # end def manage_groups
 
@@ -629,14 +629,15 @@ def manage_policies():
     elif choice == 1:
         create_policies()
     elif choice == 2:
-        policy_number = int(raw_input('Enter Policy # to update: '))
-        update_policies(policies[policy_number].name)
+        #policy_number = int(raw_input('Enter Policy # to update: '))
+        #update_policies(policies[policy_number].name)
+        print('(No yet implemented.)')
     elif choice == 3:
-        delete_policies()
-        pass
+        print('(No yet implemented.)')
+        #delete_policies()
 
     print('\r')
-    choice = raw_input('(Press Enter to continue)')
+    choice = raw_input('(Press Enter to continue.)')
     manage_policies()
 # end def manage_policies
 
@@ -740,37 +741,31 @@ def delete_autoscale():
 
 
 def change_region():
-    # If there are only two regions, just toggle to the next one
-    if len(REGIONS) == 2:
-        print('only 2')
-    else:
-        print('len: %s' % len(REGIONS))
-    print('\n')
     global CURRENT_REGION
-    print('Current Region: %s' % CURRENT_REGION)
-    print('Available Regions:')
+    print('\nCurrent Region: %s' % CURRENT_REGION)
+    print('\nAvailable Regions:')
+    count = 1
+    regions = {}
     for region in REGIONS:
-        print('%s) %s' % (region,REGIONS[region]))
-    print('\n')
+        if region == CURRENT_REGION:
+            current = '*'
+        else:
+            current = ''
+            new_region = region
+        print('%s) %s%s' % (count, region, current))
+        regions[count] = region
+        count += 1
 
-    choice = None
-    while choice not in REGIONS:
-        choice = int(raw_input('#: ')) # TODO: Handle bad input (strings)
-        #print('That was not one of the choices.')
+    if len(REGIONS) == 2:
+        print('\nSwitching to region %s' % new_region)
+        CURRENT_REGION = new_region
     else:
-        CURRENT_REGION = REGIONS[choice]
-        #make reconnections
-        make_connections()
-    raw_input('enter to continue')
-#while not AUTOSCALING_GROUP_NAME:
-#               AUTOSCALING_GROUP_NAME = raw_input('Enter a name for this new group: ')
-#       if choice in REGIONS:
-#               CURRENT_REGION = REGIONS[choice]
-#       else:
-#               print('That was not one of the choices.')
-#               time.sleep(2)
-#               change_region()
+        print('\nSelect a region:')
+        CURRENT_REGION = regions[get_choice(range(1, len(REGIONS)+1))]
 
+    print('\nResetting connections for new region...\n')
+    make_connections()
+    raw_input('(Press enter to continue.)')
 
 def clear():
     # OS agnostic method to clear the terminal screen (thanks StackOverflow)
@@ -806,10 +801,14 @@ def get_int():
             print('Please enter an integer.')
     return user_input
 
+INIT = False
 
 # Control Method
 def main():
-    make_connections()
+    global INIT
+    if INIT == False:
+        make_connections()
+        INIT = True
     # Print a menu of options
     clear()
     print('\n')
