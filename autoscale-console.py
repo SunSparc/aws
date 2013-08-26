@@ -41,6 +41,7 @@ INSTANCE_PROFILE_NAME = 'AWS IAM Role Name'
 
 # A dictionary of regions that you want to work with
 # Other than the region name, the only thing you need to specify is the AMI image id.
+# Ubuntu AMI finder: http://cloud-images.ubuntu.com/locator/ec2/
 global REGIONS
 REGIONS = {
     'us-east-1':{
@@ -48,7 +49,7 @@ REGIONS = {
         'zones':[]
         }, # Virginia
     'us-west-2':{
-        'image':'ami-e78212d7',
+        'image':'ami-4ade427a',
         'zones':[]
         }, # Oregon
 }
@@ -183,6 +184,11 @@ def create_launch_config():
     lcName = raw_input(': ')
     # Make the Launch Configuration name unique with a timestamp
     lcName = lcName + '-' + datetime.datetime.utcnow().strftime('%Y.%m.%d-%H%M%S')
+
+    global INSTANCE_PROFILE_NAME
+    if INSTANCE_PROFILE_NAME == 'AWS IAM Role Name':
+        print('Warning: You have not configured your INSTANCE_PROFILE_NAME. Disabling use of IAM role.')
+        INSTANCE_PROFILE_NAME = None
 
     launchconfig = LaunchConfiguration(
         name=lcName,
@@ -827,7 +833,6 @@ def main():
     print('4) Manage AutoScaling Groups')
     print('5) Manage Policies')
     print('6) Manage Alarms')
-    # TODO: Add an option to quickly setup everything (LC, ASG, P, A) just using the defaults.
     print('...')
     print('10) Delete all Autoscaling elements in the current region')
     print('\n')
@@ -871,6 +876,10 @@ if __name__ == '__main__':
 #instances = [i for r in reservations for i in r.instances]
 
 # Execute a policy manually (bypassing CW alarms)
+# Copy Launch Configs, Groups, Policies, Alarms, from one region to another
+# Display user-data on existing Launch Config
+# If the IAM role is incorrect, the script fails on LC creation. Perhaps there is way to handle this gracefully.
+# Instead of having an IAM role name be a global config, perhaps we just ask for it when needed during LC creation.
 
 '''
 Add a "help" option or just add to documentation.
