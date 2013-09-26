@@ -13,7 +13,19 @@ No license, no copyright, no warranty, no support. Use, re-use, distribute as yo
 Install
 =======
 
-Download the script. Edit the config section. Make the script executable (chmod) or run it with the "python" command on the command line.
+- Download the script
+- Edit the config section (need to specify image id's at the very least)
+- Make sure that Boto is installed and updated to the latest version
+  - http://boto.readthedocs.org/en/latest/getting_started.html
+
+- Make the script executable:
+
+        $ chmod u+x autoscale-console.py
+        $ ./autoscale-console.py
+
+- Or run it with the "python" command:
+
+        $ python autoscale-console.py
 
 
 Notes
