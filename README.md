@@ -3,6 +3,8 @@ aws
 
 Amazon Web Services python/boto scripts
 
+Update: As of December 2013 Amazon has finally added some Auto-Scaling tools to their web console.
+
 No license, no copyright, no warranty, no support. Use, re-use, distribute as you see fit.
 
 - README.md: This file.
