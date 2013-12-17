@@ -22,6 +22,7 @@
       "Action": [
         "ec2:DescribeAvailabilityZones",
         "ec2:DescribeKeyPairs",
+        "ec2:DescribeRegions",
         "ec2:DescribeSecurityGroups"
       ],
       "Resource": [

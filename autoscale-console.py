@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 ## Requirements:
+##  - Boto: http://boto.readthedocs.org/en/latest/getting_started.html
 ##  - AWS user credentials stored in ~/.boto
 ##  - User Data file
 ##  - IAM Role with permissions to access certain resources
@@ -42,6 +43,7 @@ INSTANCE_PROFILE_NAME = 'AWS IAM Role Name'
 # A dictionary of regions that you want to work with
 # Other than the region name, the only thing you need to specify is the AMI image id.
 # Ubuntu AMI finder: http://cloud-images.ubuntu.com/locator/ec2/
+# TODO: use show all regions to switch regions, define region AMI's only here
 global REGIONS
 REGIONS = {
     'us-east-1':{
@@ -63,25 +65,31 @@ CURRENT_REGION = 'us-east-1'
 
 DATE_FORMAT = '%Y.%m.%d-%H:%M:%S'
 
+# This type list changes periodically as AWS adds new and deprecates old ones.
 INSTANCE_TYPE_LIST = [
     't1.micro',
     'm1.small',
     'm1.medium',
     'm1.large',
     'm1.xlarge',
+    'm2.xlarge',
+    'm2.2xlarge',
+    'm2.4xlarge',
     'm3.xlarge',
     'm3.2xlarge',
     'c1.medium',
     'c1.xlarge',
-    'm2.xlarge',
-    'm2.2xlarge',
-    'm2.4xlarge',
+    'c3.large',
+    'c3.xlarge',
+    'c3.2xlarge',
+    'c3.4xlarge',
+    'c3.8xlarge',
+    'cc2.8xlarge',
     'cr1.8xlarge',
     'hi1.4xlarge',
     'hs1.8xlarge',
-    'cc1.4xlarge',
+    'g2.2xlarge',
     'cg1.4xlarge',
-    'cc2.8xlarge',
 ]
 
 def connect_to_autoscale():
@@ -364,6 +372,7 @@ def create_group():
         default_cooldown = DEFAULT_COOLDOWN,
         desired_capacity = DESIRED_CAPACITY,
         tag='k=Name, v=ASGMinion, p=true',
+        #TODO: load_balancers = [elb, list] # health_check_type??
         connection=asConnection
         )
     asConnection.create_auto_scaling_group(asgroup) # returns request id
@@ -393,7 +402,7 @@ def read_groups(get=False, details=True):
             #print '  - default_cooldown: %s' % group.default_cooldown
             #print '  - health_check_period: %s' % group.health_check_period
             #print '  - health_check_type: %s' % group.health_check_type
-            #print '  - load_balancers: %s' % group.load_balancers
+            #TODO: check for load_balancers #print '  - load_balancers: %s' % group.load_balancers
             #print '  - placement_group: %s' % group.placement_group
             #print '  - suspended_processes: %s' % group.suspended_processes
             #print '  - tags: %s' % group.tags
@@ -435,6 +444,8 @@ def delete_group(groups=[]):
         print('Group will not be deleted')
 
 ## TODO: Add methods for managing instances of groups: list instances
+def list_instances():
+    pass
 
 def show_activities(groups):
     # Get list of groups
@@ -456,6 +467,7 @@ def show_activities(groups):
         print('Progress: %s%%' % activity.progress)
         print('Status code: %s' % activity.status_code)
         print('Status message: %s' % activity.status_message)
+        # TODO: if load_balancers, show them
     # TODO: Add option to follow (like tail -f) and have status continually update.
     # Follow mode:
     #   
@@ -748,6 +760,7 @@ def delete_autoscale():
 
 
 def change_region():
+    print('All available regions: %s ' % ec2Connection.get_all_regions())
     global CURRENT_REGION
     print('\nCurrent Region: %s' % CURRENT_REGION)
     print('\nAvailable Regions:')
@@ -827,12 +840,12 @@ def main():
     print('\n')
     print('Choose an option:')
     print('0) Quit')
-    print('1) Change current region')
-    print('2) Get AutoScaling status')
-    print('3) Manage Launch Configurations')
-    print('4) Manage AutoScaling Groups')
-    print('5) Manage Policies')
-    print('6) Manage Alarms')
+    print('1) Switch Region')
+    print('2) Status')
+    print('3) Launch Configurations')
+    print('4) Groups')
+    print('5) Policies')
+    print('6) Alarms')
     print('...')
     print('10) Delete all Autoscaling elements in the current region')
     print('\n')
