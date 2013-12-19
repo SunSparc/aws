@@ -1,0 +1,6 @@
+[AutoScaling]
+# The location of the User Data script file
+user_data_script_file = 'user-data'
+# IAM Role Name 
+instance_profile_name = ''
+

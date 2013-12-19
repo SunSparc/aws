@@ -22,6 +22,7 @@ import os
 import sys
 import datetime
 import time
+import ConfigParser
 import boto.ec2.autoscale
 from boto.ec2.autoscale import LaunchConfiguration
 from boto.ec2.autoscale import AutoScaleConnection
@@ -29,16 +30,22 @@ from boto.ec2.autoscale import AutoScalingGroup
 from boto.ec2.autoscale import ScalingPolicy
 import boto.ec2.cloudwatch
 from boto.ec2.cloudwatch import MetricAlarm
+import boto.ec2.elb
 
 ##############################################
 ######### START SCRIPT CONFIGURATIONS ########
 ##############################################
 
-# The location of the User Data script file
-USER_DATA_SCRIPT_FILE = 'user-data' # the file "user-data" in the current directory
+CONFIG_FILENAME = 'config.cfg'
+if os.path.isfile(CONFIG_FILENAME):
+        config = ConfigParser.RawConfigParser()
+        config.read(CONFIG_FILENAME)
+else:
+    sys.exit('Config file "%s" does not exist.' % CONFIG_FILENAME)
 
-# IAM Role Name 
-INSTANCE_PROFILE_NAME = 'AWS IAM Role Name'
+USER_DATA_SCRIPT_FILE = config.get('AutoScaling', 'user_data_script_file') 
+INSTANCE_PROFILE_NAME = config.get('AutoScaling', 'instance_profile_name')
+CURRENT_REGION = config.get('AutoScaling', 'default_region')
 
 # A dictionary of regions that you want to work with
 # Other than the region name, the only thing you need to specify is the AMI image id.
@@ -56,8 +63,6 @@ REGIONS = {
         }, # Oregon
 }
 
-# Default region
-CURRENT_REGION = 'us-east-1'
 
 ##############################################
 ########## END SCRIPT CONFIGURATIONS #########
@@ -116,6 +121,10 @@ def connect_to_ec2():
     # key pair methods: ['connection', 'copy_to_region', 'delete', 'fingerprint', 'item', 'material', 'name', 'region', 'save']
     global KEY_PAIR_LIST
     KEY_PAIR_LIST = ec2Connection.get_all_key_pairs()
+
+def connect_to_elb():
+    global elbConnection
+    elbConnection = boto.ec2.elb.connect_to_region(CURRENT_REGION)
 
 def select_security_groups():
     print('\nList of Security Groups:')
@@ -638,8 +647,8 @@ def manage_policies():
     print('Actions:')
     print('0) Return to Main')
     print('1) Create new Policy')
-    print('2) Update existing Policy')
-    print('3) Delete a Policy')
+    #print('2) Update existing Policy')
+    #print('3) Delete a Policy')
     print('\nNote: An AutoScaling Group can have multiple policies.\n')
     choice = get_choice([0, 1, 2, 3])
 
@@ -650,9 +659,9 @@ def manage_policies():
     elif choice == 2:
         #policy_number = int(raw_input('Enter Policy # to update: '))
         #update_policies(policies[policy_number].name)
-        print('(No yet implemented.)')
+        print('(Not yet implemented.)')
     elif choice == 3:
-        print('(No yet implemented.)')
+        print('(Not yet implemented.)')
         #delete_policies()
 
     print('\r')
@@ -722,6 +731,69 @@ def manage_alarms():
 ################ END ALARMS #################
 #############################################
 
+#############################################
+################ START ELBS #################
+#############################################
+
+def read_elastic_load_balancers(get=False):
+    count = 1
+    listDict = {}
+    for elb in elbConnection.get_all_load_balancers():
+        print '%s) name: %s (%s)' % (count, elb.name, elb.dns_name)
+        print '  - cross zone load balancing: %s' % elb.is_cross_zone_load_balancing()
+        print '  - availability zones: %s' % elb.availability_zones
+        print '  - instances: %s' % elb.instances
+        if get:
+            listDict[count] = elb
+        count += 1
+    return listDict
+
+def toggle_cross_zone_load_balancing(elbs):
+    elb_number = select_elastic_load_balancer(elbs)
+    if elbs[elb_number].is_cross_zone_load_balancing():
+       elbs[elb_number].disable_cross_zone_load_balancing() 
+    else:
+       elbs[elb_number].enable_cross_zone_load_balancing() 
+
+def select_elastic_load_balancer(elbs):
+    elb_count = len(elbs)
+    if elb_count == 0:
+        print("There are no Elastic Load Balancers.")
+        return False
+    elif elb_count == 1:
+        return 1
+    else:
+        print('\nSelect an Elastic Load Balancer:')
+        return get_choice(range(1, len(elbs)+1))
+
+def manage_elastic_load_balancers():
+    clear()
+    print('\n')
+    print('---------------------------------')
+    print('  Manage Elastic Load Balancers')
+    print('---------------------------------')
+    print('\r')
+    print('Elastic Load Balancers:')
+    elbs = read_elastic_load_balancers(True)
+    print('\r')
+    print('Actions:')
+    print('0) Return to Main')
+    print('1) Toggle Cross Zone Load Balancing')
+    choice = get_choice([0, 1])
+
+    if choice == 0:
+        return True
+    elif choice == 1:
+        toggle_cross_zone_load_balancing(elbs)
+
+    print('\r')
+    choice = raw_input('(Press Enter to continue.)')
+    manage_elastic_load_balancers()
+# end def manage_elastic_load_balancers
+
+#############################################
+################# END ELBS ##################
+#############################################
 
 
 
@@ -796,6 +868,7 @@ def make_connections():
     connect_to_autoscale()
     connect_to_cloudwatch()
     connect_to_ec2()
+    connect_to_elb()
 
 # @param choices, required, a list of choices
 # @param choice_type, optional, defaults to int
@@ -846,11 +919,12 @@ def main():
     print('4) Groups')
     print('5) Policies')
     print('6) Alarms')
+    print('7) Elastic Load Balancers')
     print('...')
     print('10) Delete all Autoscaling elements in the current region')
     print('\n')
 
-    choice = get_choice([0, 1, 2, 3, 4, 5, 6, 10])
+    choice = get_choice([0, 1, 2, 3, 4, 5, 6, 7, 10])
 
     if choice == 0:
         print('\nGood-bye\n')
@@ -867,6 +941,8 @@ def main():
         manage_policies()
     elif choice == 6:
         manage_alarms()
+    elif choice == 7:
+        manage_elastic_load_balancers()
     elif choice == 10:
         print 'Why would you choose such a path of utter destruction?'
         time.sleep(5)
