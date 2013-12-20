@@ -131,7 +131,7 @@ def select_security_groups():
     count = 1
     groups = {}
     for group in SECURITY_GROUPS_LIST:
-        print('%s) %s' % (count, group.name))
+        print('%s) %s (%s)' % (count, group.name, group.id))
         groups[count] = group.name
         count += 1
     print('\nWhich security groups do you want to use?')
@@ -202,6 +202,11 @@ def create_launch_config():
     # Make the Launch Configuration name unique with a timestamp
     lcName = lcName + '-' + datetime.datetime.utcnow().strftime('%Y.%m.%d-%H%M%S')
 
+    # Use Monitoring?
+    # Use User Data?
+    # Use load balancers?
+    # Use ami from config or specify?
+    # Use IAM role?
     global INSTANCE_PROFILE_NAME
     if INSTANCE_PROFILE_NAME == 'AWS IAM Role Name':
         print('Warning: You have not configured your INSTANCE_PROFILE_NAME. Disabling use of IAM role.')
@@ -381,7 +386,7 @@ def create_group():
         default_cooldown = DEFAULT_COOLDOWN,
         desired_capacity = DESIRED_CAPACITY,
         tag='k=Name, v=ASGMinion, p=true',
-        #TODO: load_balancers = [elb, list] # health_check_type??
+        #TODO: load_balancers = [elb, list] # health_check_type?? [ELB, EC2]
         connection=asConnection
         )
     asConnection.create_auto_scaling_group(asgroup) # returns request id
@@ -722,9 +727,18 @@ def create_alarm():
 def read_alarms():
     for alarm in cwConnection.describe_alarms():
         print '- %s' % alarm
+        print('- enabled: %s' % alarm.actions_enabled)
+        if alarm.actions_enabled == 'false':
+            print('(The actions on this alarm are disabled. Automatically enabling now.')
+            alarm.actions_enabled = 'true'
+            print('- update: enabled: %s' % alarm.actions_enabled)
+            alarm.enable_actions()
+
+#dir: ['ALARM', 'INSUFFICIENT_DATA', 'OK', 'StateReasonData', 'StateUpdatedTimestamp', '__class__', '__delattr__', '__dict__', '__doc__', '__format__', '__getattribute__', '__hash__', '__init__', '__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_cmp_map', '_rev_cmp_map', 'actions_enabled', 'add_alarm_action', 'add_insufficient_data_action', 'add_ok_action', 'alarm_actions', 'alarm_arn', 'comparison', 'connection', 'delete', 'describe_history', 'description', 'dimensions', 'disable_actions', 'enable_actions', 'endElement', 'evaluation_periods', 'insufficient_data_actions', 'last_updated', 'member', 'metric', 'name', 'namespace', 'ok_actions', 'period', 'set_state', 'startElement', 'state_reason', 'state_value', 'statistic', 'threshold', 'unit', 'update']
 
 def manage_alarms():
-    pass
+    read_alarms()
+    choice = raw_input('(Press Enter to continue.)')
 
 
 #############################################
