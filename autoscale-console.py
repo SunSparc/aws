@@ -186,6 +186,33 @@ def select_instance_type():
     #print('listDict[choice]: %s' % listDict[choice])
     return listDict[choice]
 
+def select_availability_zones():
+    print('\nAvailability Zones')
+    count = 1
+    listDict = {}
+    for az in REGIONS[CURRENT_REGION]['zones']:
+        print('%s) %s' % (count, az))
+        listDict[count] = az
+        count += 1
+    print('\nWhich availability zones do you want to use?')
+    print('\n(Type the AZ number. Enter the same number to remove the selection. When done enter 0.)')
+    choice = False
+    choices = []
+    while choice is not 0:
+        print('(Selected Zones: %s)' % choices)
+        choice = get_choice(range(0, len(listDict)+1))
+        if choice is 0:
+            break
+        if choice in choices:
+            choices.remove(choice)
+        else:
+            choices.append(choice)
+    azList = []
+    for az in choices:
+        azList.append(listDict[az])
+    return azList
+
+
 
 #############################################
 ######## START LAUNCH CONFIGURATIONS ########
@@ -734,7 +761,7 @@ def read_alarms():
             print('- update: enabled: %s' % alarm.actions_enabled)
             alarm.enable_actions()
 
-#dir: ['ALARM', 'INSUFFICIENT_DATA', 'OK', 'StateReasonData', 'StateUpdatedTimestamp', '__class__', '__delattr__', '__dict__', '__doc__', '__format__', '__getattribute__', '__hash__', '__init__', '__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_cmp_map', '_rev_cmp_map', 'actions_enabled', 'add_alarm_action', 'add_insufficient_data_action', 'add_ok_action', 'alarm_actions', 'alarm_arn', 'comparison', 'connection', 'delete', 'describe_history', 'description', 'dimensions', 'disable_actions', 'enable_actions', 'endElement', 'evaluation_periods', 'insufficient_data_actions', 'last_updated', 'member', 'metric', 'name', 'namespace', 'ok_actions', 'period', 'set_state', 'startElement', 'state_reason', 'state_value', 'statistic', 'threshold', 'unit', 'update']
+#alarm: ['ALARM', 'INSUFFICIENT_DATA', 'OK', 'StateReasonData', 'StateUpdatedTimestamp', '__class__', '__delattr__', '__dict__', '__doc__', '__format__', '__getattribute__', '__hash__', '__init__', '__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_cmp_map', '_rev_cmp_map', 'actions_enabled', 'add_alarm_action', 'add_insufficient_data_action', 'add_ok_action', 'alarm_actions', 'alarm_arn', 'comparison', 'connection', 'delete', 'describe_history', 'description', 'dimensions', 'disable_actions', 'enable_actions', 'endElement', 'evaluation_periods', 'insufficient_data_actions', 'last_updated', 'member', 'metric', 'name', 'namespace', 'ok_actions', 'period', 'set_state', 'startElement', 'state_reason', 'state_value', 'statistic', 'threshold', 'unit', 'update']
 
 def manage_alarms():
     read_alarms()
@@ -749,6 +776,8 @@ def manage_alarms():
 ################ START ELBS #################
 #############################################
 
+#def create_elastic_load_balancer():
+
 def read_elastic_load_balancers(get=False):
     count = 1
     listDict = {}
@@ -761,6 +790,15 @@ def read_elastic_load_balancers(get=False):
             listDict[count] = elb
         count += 1
     return listDict
+
+def update_elb_zones(elbs):
+    elb_number = select_elastic_load_balancer(elbs)
+    if not elb_number:
+        return 1
+    elb_zones = select_availability_zones()
+    print('Setting %s to use zones: %s' % (elbs[elb_number].name, elb_zones))
+    elbConnection.enable_availability_zones(elbs[elb_number].name, elb_zones)
+
 
 def toggle_cross_zone_load_balancing(elbs):
     elb_number = select_elastic_load_balancer(elbs)
@@ -793,12 +831,15 @@ def manage_elastic_load_balancers():
     print('Actions:')
     print('0) Return to Main')
     print('1) Toggle Cross Zone Load Balancing')
-    choice = get_choice([0, 1])
+    print('2) Update Availability Zones')
+    choice = get_choice([0, 1, 2])
 
     if choice == 0:
         return True
     elif choice == 1:
         toggle_cross_zone_load_balancing(elbs)
+    elif choice == 2:
+        update_elb_zones(elbs)
 
     print('\r')
     choice = raw_input('(Press Enter to continue.)')
@@ -891,6 +932,7 @@ def get_choice(choices=[], choice_type='int'):
         return
     choice = None
     while choice not in choices:
+        #choice = raw_input('# %s: ' % choices) # show choices
         choice = raw_input('#: ')
         try:
             choice = int(choice)
