@@ -267,7 +267,8 @@ def update_launch_config(launchConfigs):
     group.update()
     # Kill the launch configuration
     #connection[CURRENT_REGION].delete_launch_configuration(oldLaunchConfigName)
-    delete_launch_config(oldLCName)
+    if raw_input('Do you want to delete the old Launch Config? (y/n) ').lower() == 'y':
+        delete_launch_config(oldLCName)
     print('New Launch Configuration successfully attached to the AutoScaling Group in place of the old one.')
     return True
 
@@ -278,8 +279,7 @@ def delete_launch_config(lcName=None):
     if group:
         print('Cannot delete Launch Configuration "%s", it is attached to the AutoScaling Group "%s".' % (lcName, group.name))
         return False
-    choice = raw_input('Are you sure you want to delete: "%s"? (y/n) ' % lcName).lower()
-    if choice == 'y':
+    if raw_input('Are you sure you want to delete: "%s"? (y/n) ' % lcName).lower() == 'y':
         # Make sure that this Launch Configuration is not attached to an Auto Scaling Group
         try:
             delete_result = asConnection.delete_launch_configuration(lcName) # delete returns request id
