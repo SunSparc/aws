@@ -47,55 +47,21 @@ USER_DATA_SCRIPT_FILE = config.get('AutoScaling', 'user_data_script_file')
 INSTANCE_PROFILE_NAME = config.get('AutoScaling', 'instance_profile_name')
 CURRENT_REGION = config.get('AutoScaling', 'default_region')
 
-# A dictionary of regions that you want to work with
-# Other than the region name, the only thing you need to specify is the AMI image id.
-# Ubuntu AMI finder: http://cloud-images.ubuntu.com/locator/ec2/
-# TODO: use show all regions to switch regions, define region AMI's only here
+# Get list of regions:  ec2Connection.get_all_regions()
 global REGIONS
-REGIONS = {
-    'us-east-1':{
-        'image':'ami-9597e1fc',
-        'zones':[]
-        }, # Virginia
-    'us-west-2':{
-        'image':'ami-4ade427a',
-        'zones':[]
-        }, # Oregon
-}
+REGIONS = {}
+for region in config.items('Regions'):
+    REGIONS[region[0]] = {'image': region[1], 'zones':[]}
 
+DATE_FORMAT = '%Y.%m.%d-%H:%M:%S'
+
+INSTANCE_TYPE_LIST = []
+for instance_type in config.items('InstanceTypes'):
+    INSTANCE_TYPE_LIST.append(instance_type[0])
 
 ##############################################
 ########## END SCRIPT CONFIGURATIONS #########
 ##############################################
-
-DATE_FORMAT = '%Y.%m.%d-%H:%M:%S'
-
-# This type list changes periodically as AWS adds new and deprecates old ones.
-INSTANCE_TYPE_LIST = [
-    't1.micro',
-    'm1.small',
-    'm1.medium',
-    'm1.large',
-    'm1.xlarge',
-    'm2.xlarge',
-    'm2.2xlarge',
-    'm2.4xlarge',
-    'm3.xlarge',
-    'm3.2xlarge',
-    'c1.medium',
-    'c1.xlarge',
-    'c3.large',
-    'c3.xlarge',
-    'c3.2xlarge',
-    'c3.4xlarge',
-    'c3.8xlarge',
-    'cc2.8xlarge',
-    'cr1.8xlarge',
-    'hi1.4xlarge',
-    'hs1.8xlarge',
-    'g2.2xlarge',
-    'cg1.4xlarge',
-]
 
 def connect_to_autoscale():
     global asConnection

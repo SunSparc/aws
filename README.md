@@ -16,7 +16,8 @@ Install
 =======
 
 - Download the script
-- Edit the config section (need to specify image id's at the very least)
+- Rename (or copy) the config.cfg.example file to config.cfg and then edit it to your liking
+(need to specify image id's at the very least)
 - Make sure that Boto is installed and updated to the latest version
   - http://boto.readthedocs.org/en/latest/getting_started.html
 

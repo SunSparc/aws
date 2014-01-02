@@ -2,7 +2,19 @@
 # The location of the User Data script file
 user_data_script_file = user-data
 # IAM Role Name (If you do not have an IAM Role, leave this alone)
-instance_profile_name = AWS IAM Role Name 
+instance_profile_name = AWS IAM Role Name
 # The default AWS region
 default_region = us-east-1
 
+[Regions]
+# Virginia
+us-east-1 = ami-9597e1fc
+# Oregon
+us-west-2 = ami-4ade427a
+# Northern California
+us-west-1 = False
+eu-west-1 = False
+sa-east-1 = False
+ap-northeast-1 = False
+ap-southeast-1 = False
+ap-southeast-2 = False
