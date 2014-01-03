@@ -28,6 +28,7 @@ from boto.ec2.autoscale import LaunchConfiguration
 from boto.ec2.autoscale import AutoScaleConnection
 from boto.ec2.autoscale import AutoScalingGroup
 from boto.ec2.autoscale import ScalingPolicy
+from boto.ec2.autoscale.tag import Tag
 import boto.ec2.cloudwatch
 from boto.ec2.cloudwatch import MetricAlarm
 import boto.ec2.elb
@@ -201,9 +202,13 @@ def create_launch_config():
     # Use ami from config or specify?
     # Use IAM role?
     global INSTANCE_PROFILE_NAME
-    if INSTANCE_PROFILE_NAME == 'AWS IAM Role Name':
+    if INSTANCE_PROFILE_NAME:
+        print('Use default or specify?')
+    else:
         print('Warning: You have not configured your INSTANCE_PROFILE_NAME. Disabling use of IAM role.')
         INSTANCE_PROFILE_NAME = None
+
+    exit()
 
     launchconfig = LaunchConfiguration(
         name=lcName,
@@ -479,6 +484,12 @@ def show_activities(groups):
     # Follow mode:
     #   
 
+def tag_instances(groups):
+    group_number = select_group(groups)
+    tag_name = raw_input('What would you like to name the instances in this group? ')
+    tag = Tag(key='name', value=tag_name, propagate_at_launch=True, resource_id=groups[group_number].name)
+    asConnection.create_or_update_tags([tag])
+
 def terminate_instances(groups):
     #print('\nWhich Group would you like to terminate instances in?')
     #group_number = get_choice(range(1, len(groups)+1))
@@ -531,9 +542,10 @@ def manage_groups():
     print('2) Update existing Group')
     print('3) Delete an Group')
     print('4) Show Group Activities (10 most recent)')
-    print('5) Terminate instances')
+    print('5) Tag Instances')
+    print('6) Terminate Instances')
     # Get group activities: group.get_activities(), for activity in group[0].get_activities():
-    choice = get_choice([0, 1, 2, 3, 4, 5])
+    choice = get_choice([0, 1, 2, 3, 4, 5, 6])
 
     if choice == 0:
         return True
@@ -548,6 +560,8 @@ def manage_groups():
     elif choice == 4:
         show_activities(groups)
     elif choice == 5:
+        tag_instances(groups)
+    elif choice == 6:
         terminate_instances(groups)
 
     print('\r')
@@ -990,7 +1004,6 @@ if __name__ == '__main__':
 # Copy Launch Configs, Groups, Policies, Alarms, from one region to another
 # Display user-data on existing Launch Config
 # If the IAM role is incorrect, the script fails on LC creation. Perhaps there is way to handle this gracefully.
-# Instead of having an IAM role name be a global config, perhaps we just ask for it when needed during LC creation.
 
 '''
 Add a "help" option or just add to documentation.
