@@ -30,6 +30,15 @@ Install
 
         $ python autoscale-console.py
 
+Education
+=========
+
+- AutoScaling is created in this order:
+  - 1) Launch Configuration
+  - 2) AutoScaling Group
+  - 3) Policies
+- AutoScaling is deleted in the reverse order.
+
 
 Notes
 =====
