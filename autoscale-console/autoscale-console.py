@@ -38,6 +38,7 @@ import boto.ec2.elb
 ##############################################
 
 CONFIG_FILENAME = 'config.cfg'
+CONFIG_FILENAME = os.path.join(os.path.abspath(os.path.dirname(__file__)),CONFIG_FILENAME)
 if os.path.isfile(CONFIG_FILENAME):
         config = ConfigParser.RawConfigParser()
         config.read(CONFIG_FILENAME)
