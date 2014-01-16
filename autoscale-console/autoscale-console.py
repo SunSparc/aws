@@ -980,7 +980,7 @@ def main():
     elif choice == 7:
         manage_elastic_load_balancers()
     elif choice == 10:
-        print 'Why would you choose such a path of utter destruction?'
+        print('Why would you choose such a path of utter destruction?')
         time.sleep(5)
         #delete_autoscale()
     main()
@@ -1004,14 +1004,4 @@ if __name__ == '__main__':
 # Copy Launch Configs, Groups, Policies, Alarms, from one region to another
 # Display user-data on existing Launch Config
 # If the IAM role is incorrect, the script fails on LC creation. Perhaps there is way to handle this gracefully.
-
-'''
-Add a "help" option or just add to documentation.
-Education:
- - AutoScaling is created in this order:
-   - 1) Launch Configuration
-   - 2) AutoScaling Group
-   - 3) Policies
- - AutoScaling is deleted in the reverse order.
-'''
 
