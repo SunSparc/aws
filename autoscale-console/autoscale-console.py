@@ -402,15 +402,26 @@ def read_groups(get=False, details=True):
         if details:
             print '  - created_time: %s' % group.created_time
             print '  - launch_config_name: %s' % group.launch_config_name
-            print '  - min_size: %s' % group.min_size
-            print '  - max_size: %s' % group.max_size
+            print('  - instances: {0}, desired: {1}, min_size: {2}, max_size: {3}'.format(len(group.instances),group.desired_capacity, group.min_size, group.max_size))
+#print '  - max_size: %s' % group.max_size
+#print '  - desired_capacity: %s' % group.desired_capacity
+            if group.enabled_metrics:
+                print '  - enabled_metrics: %s' % group.enabled_metrics
+            if group.instances:
+                print('  - instances:')
+                for instance in group.instances:
+                    print('    - {0}'.format(instance))
+                #print('  - instances: {0}'.format(group.instances))
+            else:
+                print('  - instances: None')
+            if group.tags:
+                print '  - tags: %s' % group.tags
+            else:
+                print('  - tags: None')
             print '  - cooldown: %s' % group.cooldown
-            print '  - desired_capacity: %s' % group.desired_capacity
-            print '  - enabled_metrics: %s' % group.enabled_metrics
-            print '  - instances: %s' % group.instances
             # Other available details
             #print '  - autoscaling_group_arn: %s' % group.autoscaling_group_arn
-            #print '  - availability_zones: %s' % group.availability_zones
+            print '  - availability_zones: %s' % group.availability_zones
             #print '  - connection: %s' % group.connection
             #print '  - default_cooldown: %s' % group.default_cooldown
             #print '  - health_check_period: %s' % group.health_check_period
@@ -418,7 +429,6 @@ def read_groups(get=False, details=True):
             #TODO: check for load_balancers #print '  - load_balancers: %s' % group.load_balancers
             #print '  - placement_group: %s' % group.placement_group
             #print '  - suspended_processes: %s' % group.suspended_processes
-            #print '  - tags: %s' % group.tags
             #print '  - termination_policies: %s' % group.termination_policies
         if get:
             listDict[count] = group
@@ -488,7 +498,7 @@ def show_activities(groups):
 def tag_instances(groups):
     group_number = select_group(groups)
     tag_name = raw_input('What would you like to name the instances in this group? ')
-    tag = Tag(key='name', value=tag_name, propagate_at_launch=True, resource_id=groups[group_number].name)
+    tag = Tag(key='Name', value=tag_name, propagate_at_launch=True, resource_id=groups[group_number].name)
     asConnection.create_or_update_tags([tag])
 
 def terminate_instances(groups):
