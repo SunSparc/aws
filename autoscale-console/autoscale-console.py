@@ -332,7 +332,9 @@ def manage_launch_configs():
     elif choice == 2:
         update_launch_config(launchconfigs)
     elif choice == 3:
-        lc_number = int(raw_input('Enter Launch Config # to delete: '))
+        #lc_number = int(raw_input('Enter Launch Config # to delete: '))
+        print('Enter Launch Config # to delete: ')
+        lc_number = get_int()
         delete_launch_config(launchconfigs[lc_number].name)
 
     print('\r')
