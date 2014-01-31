@@ -9,6 +9,7 @@ No license, no copyright, no warranty, no support. Use, re-use, distribute as yo
 
 - README.md: This file.
 - autoscale-console.py: The console script.
+- config.cfg.example: All your configurations go into the config.cfg file.
 - user-data: A vanilla file that the console script requires. Add your own server provisioning.
 - iam-permissions: A list of permissions used by the console script to be able to access AWS functionality.
 
