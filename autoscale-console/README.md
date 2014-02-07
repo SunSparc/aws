@@ -39,6 +39,7 @@ Education
   - 2) AutoScaling Group
   - 3) Policies
 - AutoScaling is deleted in the reverse order.
+- Policies are group specific and non-transferable.
 
 
 Notes
