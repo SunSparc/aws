@@ -365,18 +365,23 @@ def create_group():
 
     autoscalingGroupName = None
     while not autoscalingGroupName:
-        autoscalingGroupName = raw_input('Enter a name for this new AutoScaling Group: ')
+        print('Enter a name for this new AutoScaling Group:') 
+        autoscalingGroupName = raw_input('#: ')
 
     print('Enter the Minimum Size')
     GROUP_MIN_SIZE = get_int()
     print('Enter the Maximum Size')
-    GROUP_MAX_SIZE = 0
-    while GROUP_MAX_SIZE is 0:
-        GROUP_MAX_SIZE = get_int()
+    GROUP_MAX_SIZE = get_int()
     print('Enter the default cooldown in seconds (default is 300 (5 minutes))')
     DEFAULT_COOLDOWN = get_int()
-    print('Enter the desired capacity (number of instances to always have running)')
+    print('Enter the desired capacity (number of instances to start right now)')
     DESIRED_CAPACITY = get_int()
+    print('Enter a Name tag for intances of this group:')
+    NAME_TAG = raw_input('#: ')
+    if NAME_TAG != '':
+        NAME_TAG = [Tag(key='Name', value=NAME_TAG, propagate_at_launch=True, resource_id=autoscalingGroupName)]
+    else:
+        NAME_TAG = None
 
     asgroup = AutoScalingGroup(
         group_name=autoscalingGroupName,
@@ -386,9 +391,9 @@ def create_group():
         max_size = GROUP_MAX_SIZE,
         default_cooldown = DEFAULT_COOLDOWN,
         desired_capacity = DESIRED_CAPACITY,
-        tag='k=Name, v=ASGMinion, p=true',
+        tags=NAME_TAG,
         #TODO: load_balancers = [elb, list] # health_check_type?? [ELB, EC2]
-        connection=asConnection
+        #connection=asConnection
         )
     asConnection.create_auto_scaling_group(asgroup) # returns request id
 # end def create_group
@@ -456,6 +461,7 @@ def update_group():
     pass
 
 def delete_group(groups=[]):
+    # TODO: If the group has instances, verify that we want to terminate them, then set desired to 0, when ready, delete group
     if not groups:
         return false
     # Specify which Group to delete
@@ -464,7 +470,7 @@ def delete_group(groups=[]):
     print('Are you sure you want to delete: %s (y/n)' % groups[groupToDelete].name)
     if get_choice(['y', 'n']) is 'y':
         asConnection.delete_auto_scaling_group(groups[groupToDelete].name) # OR asgroup.delete()
-        print('Group was scheduled for deletion')
+        print('Group was scheduled for deletion. Actual deletion may take several minutes.')
     else:
         print('Group will not be deleted')
 
@@ -502,6 +508,13 @@ def tag_instances(groups):
     tag_name = raw_input('What would you like to name the instances in this group? ')
     tag = Tag(key='Name', value=tag_name, propagate_at_launch=True, resource_id=groups[group_number].name)
     asConnection.create_or_update_tags([tag])
+    # delete old tags? adding tags does not replace existing ones.
+
+def delete_tags(groups):
+    print('Which group would you like to delete all tags from?')
+    group_number = select_group(groups)
+    print('Deleting the following tags:', groups[group_number].tags)
+    asConnection.delete_tags(groups[group_number].tags)
 
 def terminate_instances(groups):
     #print('\nWhich Group would you like to terminate instances in?')
@@ -556,9 +569,10 @@ def manage_groups():
     print('3) Delete an Group')
     print('4) Show Group Activities (10 most recent)')
     print('5) Tag Instances')
-    print('6) Terminate Instances')
+    print('6) Delete Tags')
+    print('7) Terminate Instances')
     # Get group activities: group.get_activities(), for activity in group[0].get_activities():
-    choice = get_choice([0, 1, 2, 3, 4, 5, 6])
+    choice = get_choice([0, 1, 2, 3, 4, 5, 6, 7])
 
     if choice == 0:
         return True
@@ -575,6 +589,8 @@ def manage_groups():
     elif choice == 5:
         tag_instances(groups)
     elif choice == 6:
+        delete_tags(groups)
+    elif choice == 7:
         terminate_instances(groups)
 
     print('\r')
@@ -920,6 +936,7 @@ def make_connections():
 
 # @param choices, required, a list of choices
 # @param choice_type, optional, defaults to int
+#TODO: enter for default (is there a default?)
 def get_choice(choices=[], choice_type='int'):
     if not choices:
         return
@@ -1008,13 +1025,20 @@ if __name__ == '__main__':
 ## TODO: List of Extra todos
 ###########################################
 '''
-## List all instances
-#instance_ids = [i.instance_id for i in group.instances] # []
-#reservations = ec2.get_all_instances(instance_ids) # []
-#instances = [i for r in reservations for i in r.instances]
-
 # Execute a policy manually (bypassing CW alarms)
 # Copy Launch Configs, Groups, Policies, Alarms, from one region to another
 # Display user-data on existing Launch Config
 # If the IAM role is incorrect, the script fails on LC creation. Perhaps there is way to handle this gracefully.
 
+# update launch config
+# - need to add more options, monitoring, IAM, AMI image
+# - update just AMI, copy old settings and just auto create new on with new image id
+
+# create groups
+# - associate with load balancers
+# update groups
+# - associate with load balancers
+
+# Copy group
+# - in order to rename it
+#   - copy requires: update alarms with new group name
