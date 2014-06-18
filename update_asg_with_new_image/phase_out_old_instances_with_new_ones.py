@@ -3,6 +3,7 @@
 import sys
 import time
 import boto.ec2.autoscale
+from boto.ec2.autoscale.tag import Tag
 
 asConnection = None
 ec2Connection = None
@@ -10,7 +11,10 @@ AUTOSCALING_GROUP_NAME = None
 original_instances = []
 
 def get_group():
-    return asConnection.get_all_groups(names=[AUTOSCALING_GROUP_NAME])[0]
+    try:
+        return asConnection.get_all_groups(names=[AUTOSCALING_GROUP_NAME])[0]
+    except IndexError:
+        print('Apparently there is no group named "{0}" in the "{1}" region.'.format(AUTOSCALING_GROUP_NAME, asConnection.region.name))
 
 def get_group_instances():
     instances = []
@@ -31,13 +35,18 @@ def get_new_instances_status():
     else:
         return False
 
-def main(REGION, ASG_NAME):
+def main(REGION, ASG_NAME, SERVICE_NAME):
+    print('Current region: {0}'.format(REGION))
     global AUTOSCALING_GROUP_NAME
     AUTOSCALING_GROUP_NAME = ASG_NAME
     global asConnection
     asConnection = boto.ec2.autoscale.connect_to_region(REGION)
     global ec2Connection
     ec2Connection = boto.ec2.connect_to_region(REGION)
+
+    print('Adding the tag "{0}" to the "{1}" group.'.format(SERVICE_NAME, ASG_NAME))
+    tag = Tag(key='Name', value=SERVICE_NAME, propagate_at_launch=True, resource_id=ASG_NAME)
+    asConnection.create_or_update_tags([tag])
 
     group = get_group()
     if group.desired_capacity == 0:
@@ -67,7 +76,10 @@ def main(REGION, ASG_NAME):
         sys.stdout.flush()
         time.sleep(10)
     else:
-        print('\nNew instances are live, old ones are terminating.')
         # When new instances are live, terminate same number of instances that we launched
         # This requires Termination Policies to be: OldestLaunchConfiguration, OldestInstance
-        group.set_capacity(DESIRED_CAPACITY)
+		# TODO?? Sometimes the instances that get terminated are the original ones.
+		# To avoid this we could specify which instances to terminate and manually scale in the group.
+        # Or we can just let scaling policies take capacity back down for us.
+        #group.set_capacity(DESIRED_CAPACITY)
+        print('\nNew instances are live.')

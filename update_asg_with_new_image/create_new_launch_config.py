@@ -5,7 +5,7 @@ import sys
 import boto.ec2.autoscale
 from boto.ec2.autoscale import LaunchConfiguration
 
-def main(REGION, NEW_AMI_ID, ASG_NAME, SERVICE_NAME):
+def main(REGION, NEW_AMI_ID, ASG_NAME, SERVICE_NAME, SECURITY_GROUPS):
     print('Creating new launch config in the "{0}" region.'.format(REGION))
     asConnection = boto.ec2.autoscale.connect_to_region(REGION)
     try:
@@ -35,7 +35,7 @@ def main(REGION, NEW_AMI_ID, ASG_NAME, SERVICE_NAME):
         user_data = oldLC.user_data,
         instance_type = oldLC.instance_type,
         instance_monitoring = monitoring,
-        security_groups = oldLC.security_groups,
+        security_groups = SECURITY_GROUPS,
         )
     # create returns a request id
     if asConnection.create_launch_configuration(launchconfig):
