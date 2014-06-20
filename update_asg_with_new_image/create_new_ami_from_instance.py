@@ -17,6 +17,7 @@ def main(REGION, INSTANCE_ID, SERVICE_NAME):
 
     block_device_type = boto.ec2.blockdevicemapping.BlockDeviceType()
     block_device_type.volume_type='gp2'
+    block_device_type.delete_on_termination='true'
     block_device_mapping = boto.ec2.blockdevicemapping.BlockDeviceMapping()
     block_device_mapping['/dev/sda1'] = block_device_type
 
